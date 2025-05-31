@@ -26,6 +26,9 @@ jobs:
               <meta charset="UTF-8">
               <meta name="viewport" content="width=device-width, initial-scale=1.0">
               <title>Weather Share - ${{ github.event.client_payload.location }}</title>
+              <meta property="og:title" content="Weather in ${{ github.event.client_payload.location }}">
+              <meta property="og:description" content="${{ github.event.client_payload.weather.message || 'Check out this weather!' }}">
+              <meta property="og:type" content="website">
               <style>
                   body {
                       margin: 0;
@@ -102,41 +105,63 @@ jobs:
                       font-size: 0.875rem;
                       color: rgba(255, 255, 255, 0.8);
                   }
+                  .message {
+                      margin: 1rem 0;
+                      padding: 1rem;
+                      background: rgba(255, 255, 255, 0.1);
+                      border-radius: 0.5rem;
+                      font-style: italic;
+                  }
               </style>
           </head>
           <body>
-              <main>
-                  <div class="card">
-                      <div class="location">
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="#333">
-                              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                          </svg>
-                          ${{ github.event.client_payload.location }}
+              <div class="container">
+                  <h1>Weather in ${{ github.event.client_payload.location }}</h1>
+                  
+                  {{#if github.event.client_payload.weather.message}}
+                  <div class="message">
+                      "{{ github.event.client_payload.weather.message }}"
+                  </div>
+                  {{/if}}
+
+                  <div class="weather-card">
+                      <div class="card">
+                          <div class="location">
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="#333">
+                                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                              </svg>
+                              ${{ github.event.client_payload.location }}
+                          </div>
+                          <h1 class="temperature">${{ github.event.client_payload.weather.temp }}°</h1>
+                          <div class="condition">${{ github.event.client_payload.weather.condition }}</div>
+                          <div class="details">
+                              <div class="detail-item">
+                                  <span class="detail-value">${{ github.event.client_payload.weather.humidity }}%</span>
+                                  <span class="detail-label">Humidity</span>
+                              </div>
+                              <div class="detail-item">
+                                  <span class="detail-value">${{ github.event.client_payload.weather.wind }} km/h</span>
+                                  <span class="detail-label">Wind</span>
+                              </div>
+                              <div class="detail-item">
+                                  <span class="detail-value">${{ github.event.client_payload.weather.feels_like }}°</span>
+                                  <span class="detail-label">Feels like</span>
+                              </div>
+                          </div>
+                          <div class="timestamp">
+                              Shared on ${{ github.event.client_payload.timestamp }}
+                          </div>
                       </div>
-                      <h1 class="temperature">${{ github.event.client_payload.weather.temp }}°</h1>
-                      <div class="condition">${{ github.event.client_payload.weather.condition }}</div>
-                      <div class="details">
-                          <div class="detail-item">
-                              <span class="detail-value">${{ github.event.client_payload.weather.humidity }}%</span>
-                              <span class="detail-label">Humidity</span>
-                          </div>
-                          <div class="detail-item">
-                              <span class="detail-value">${{ github.event.client_payload.weather.wind }} km/h</span>
-                              <span class="detail-label">Wind</span>
-                          </div>
-                          <div class="detail-item">
-                              <span class="detail-value">${{ github.event.client_payload.weather.feels_like }}°</span>
-                              <span class="detail-label">Feels like</span>
-                          </div>
-                      </div>
-                      <div class="timestamp">
-                          Shared on ${{ github.event.client_payload.timestamp }}
+                      <div class="footer">
+                          Shared via Weather App
                       </div>
                   </div>
-                  <div class="footer">
-                      Shared via Weather App
-                  </div>
-              </main>
+
+                  <footer>
+                      <p>Shared on <span id="timestamp">{{ github.event.client_payload.timestamp }}</span></p>
+                      <p>This share will expire in 24 hours</p>
+                  </footer>
+              </div>
           </body>
           </html>
           EOL
