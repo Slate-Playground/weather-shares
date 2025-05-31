@@ -1,0 +1,33 @@
+name: Create Weather Share
+
+on:
+  repository_dispatch:
+    types: [create-share]
+
+jobs:
+  create-share:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Create share directory
+        run: |
+          mkdir -p public/shares/${{ github.event.client_payload.shareId }}
+          
+      - name: Generate share HTML
+        run: |
+          cat > public/shares/${{ github.event.client_payload.shareId }}/index.html << 'EOL'
+          <!DOCTYPE html>
+          <html lang="en">
+          <!-- ... HTML template ... -->
+          </html>
+          EOL
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
+          keep_files: true
