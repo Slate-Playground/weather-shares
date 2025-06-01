@@ -436,19 +436,6 @@ jobs:
                               <span class="detail-label">Feels like</span>
                           </div>
                       </div>
-                      <div class="qr-section">
-                          <div class="qr-glass">
-                              <div class="qr-loader" id="qr-loader">
-                                  <svg viewBox="0 0 100 100">
-                                      <circle cx="50" cy="50" r="44" stroke="#1e90ff" stroke-width="8" fill="none" opacity="0.18"/>
-                                      <circle cx="50" cy="50" r="44" stroke="#1e90ff" stroke-width="8" fill="none" stroke-dasharray="276" stroke-dashoffset="0" style="stroke-linecap:round; animation: qr-spin 1.8s linear infinite;"/>
-                                      <text x="50" y="56" text-anchor="middle" font-size="22" fill="#1e90ff" opacity="0.7">...</text>
-                                  </svg>
-                              </div>
-                              <img id="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://${{ github.repository_owner }}.github.io/weather-shares/shares/${{ github.event.client_payload.shareId }}" alt="QR Code" style="display:none; border-radius:16px; box-shadow:0 4px 24px rgba(30,144,255,0.12); background:white; padding:8px;" width="200" height="200"/>
-                              <div style="margin-top:12px; color:#1e90ff; font-weight:600; font-size:1rem;">Scan to view weather share</div>
-                          </div>
-                      </div>
                       <div class="timestamp" id="timestamp"></div>
                       <div class="footer">
                           <p id="expiry"></p>
