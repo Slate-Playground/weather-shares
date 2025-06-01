@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Share - Somewhere on Earth</title>
+    <meta property="og:title" content="Weather in Somewhere on Earth">
+    <meta property="og:description" content="Check out the current weather conditions!">
+    <meta property="og:type" content="website">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1e90ff;
+            --text-primary: #1e1e1e;
+            --text-secondary: #666;
+            --background-start: #1e90ff;
+            --background-end: #00008b;
+            --card-background: rgba(255, 255, 255, 0.95);
+            --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --border-radius: 24px;
+            --spacing-unit: 8px;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --text-primary: #ffffff;
+                --text-secondary: #cccccc;
+                --card-background: rgba(255, 255, 255, 0.1);
+                --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 16px;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, var(--background-start), var(--background-end));
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-primary);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: calc(var(--spacing-unit) * 2);
+        }
+
+        .weather-card {
+            background: var(--card-background);
+            backdrop-filter: blur(18px);
+            border-radius: var(--border-radius);
+            padding: calc(var(--spacing-unit) * 4);
+            box-shadow: var(--card-shadow);
+            animation: card-appear 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes card-appear {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .weather-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: calc(var(--spacing-unit) * 3);
+        }
+
+        .weather-icon svg {
+            width: 80px;
+            height: 80px;
+            display: block;
+        }
+
+        .weather-icon.sun svg #sun-core {
+            animation: sun-spin 6s linear infinite;
+            transform-origin: 40px 40px;
+        }
+
+        @keyframes sun-spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .weather-icon.cloud svg #cloud {
+            animation: cloud-bob 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes cloud-bob {
+            0% {
+                transform: translateY(0);
+            }
+            100% {
+                transform: translateY(-6px);
+            }
+        }
+
+        .weather-icon.rain svg #raindrop {
+            animation: rain-fall 1.2s linear infinite;
+        }
+
+        @keyframes rain-fall {
+            0% {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            30% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+        }
+
+        .weather-icon.snow svg #snow {
+            animation: snow-fall 1.2s linear infinite;
+        }
+
+        @keyframes snow-fall {
+            0% {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            30% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+        }
+
+        .weather-icon.thunderstorm svg #storm {
+            animation: storm-appear 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes storm-appear {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .weather-icon.fog svg #fog {
+            animation: fog-appear 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes fog-appear {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .location {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            margin-bottom: calc(var(--spacing-unit) * 3);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-unit);
+        }
+
+        .temperature {
+            font-size: 4rem;
+            font-weight: bold;
+            color: var(--text-primary);
+            margin: 0;
+            line-height: 1;
+        }
+
+        .condition {
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            margin: calc(var(--spacing-unit)) 0 calc(var(--spacing-unit) * 3);
+        }
+
+        .message {
+            margin: calc(var(--spacing-unit) * 2) 0;
+            padding: calc(var(--spacing-unit) * 2);
+            background: rgba(255, 255, 255, 0.18);
+            border-radius: calc(var(--border-radius) / 2);
+            font-style: italic;
+            color: var(--text-secondary);
+            animation: message-appear 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.2s both;
+        }
+
+        @keyframes message-appear {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: calc(var(--spacing-unit) * 2);
+            margin-top: calc(var(--spacing-unit) * 2);
+            padding-top: calc(var(--spacing-unit) * 3);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--spacing-unit);
+            padding: calc(var(--spacing-unit) * 2);
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: calc(var(--border-radius) / 2);
+            transition: transform 0.2s ease;
+            opacity: 0;
+            animation: detail-fade-in 0.5s forwards;
+        }
+
+        .detail-item:nth-child(1) {
+            animation-delay: 0.2s;
+        }
+
+        .detail-item:nth-child(2) {
+            animation-delay: 0.35s;
+        }
+
+        .detail-item:nth-child(3) {
+            animation-delay: 0.5s;
+        }
+
+        @keyframes detail-fade-in {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .detail-value {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .detail-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .footer {
+            margin-top: calc(var(--spacing-unit) * 4);
+            text-align: center;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            opacity: 0.8;
+        }
+
+        .timestamp {
+            margin-top: calc(var(--spacing-unit) * 3);
+            text-align: center;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: var(--spacing-unit);
+            }
+
+            .weather-card {
+                padding: calc(var(--spacing-unit) * 3);
+            }
+
+            .temperature {
+                font-size: 3rem;
+            }
+
+            .condition {
+                font-size: 1.25rem;
+            }
+
+            .details {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .qr-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 32px;
+        }
+        .qr-glass {
+            background: rgba(255,255,255,0.18);
+            backdrop-filter: blur(12px);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(30,144,255,0.12);
+            padding: 24px 24px 16px 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 220px;
+        }
+        .qr-loader {
+            width: 120px;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+        .qr-loader svg {
+            width: 100px;
+            height: 100px;
+            display: block;
+        }
+        .qr-appear {
+            animation: qr-appear 0.7s cubic-bezier(0.4,0,0.2,1);
+        }
+        @keyframes qr-appear {
+            from { opacity: 0; transform: scale(0.7); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+    <script>
+      // Set gradient based on weather condition
+      document.addEventListener('DOMContentLoaded', function() {
+        const condition = "Mainly Clear".toLowerCase();
+        const gradients = {
+          clear: ['#87ceeb', '#ffa07a'],
+          'mainly clear': ['#b0c4de', '#e6e6fa'],
+          cloudy: ['#708090', '#778899'],
+          rain: ['#4682b4', '#000080'],
+          drizzle: ['#4682b4', '#000080'],
+          snow: ['#f0f8ff', '#e6e6fa'],
+          thunderstorm: ['#483d8b', '#191970'],
+          fog: ['#dcdcdc', '#c0c0c0'],
+          default: ['#1e90ff', '#00008b']
+        };
+        const grad = gradients[condition] || gradients.default;
+        document.documentElement.style.setProperty('--background-start', grad[0]);
+        document.documentElement.style.setProperty('--background-end', grad[1]);
+      });
+
+      // QR loader logic
+      function showQR() {
+        document.getElementById('qr-loader').style.display = 'none';
+        const qr = document.getElementById('qr-img');
+        qr.style.display = 'block';
+        qr.classList.add('qr-appear');
+      }
+      document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(showQR, 1800); // Simulate QR generation delay
+      });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="weather-card">
+            <div class="weather-icon" id="weather-icon"></div>
+            <div class="location">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                </svg>
+                <span id="location-text"></span>
+            </div>
+            <h1 class="temperature">88°</h1>
+            <div class="condition">Mainly Clear</div>
+            <div class="message"></div>
+            <div class="details">
+                <div class="detail-item">
+                    <span class="detail-value">87%</span>
+                    <span class="detail-label">Humidity</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-value">8 km/h</span>
+                    <span class="detail-label">Wind</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-value">95°</span>
+                    <span class="detail-label">Feels like</span>
+                </div>
+            </div>
+            <div class="timestamp" id="timestamp"></div>
+            <div class="footer">
+                <p id="expiry"></p>
+                <p>Shared via Slate Weather</p>
+            </div>
+        </div>
+    </div>
+    <script>
+      // Animated SVG weather icon
+      function getWeatherSVG(condition) {
+        switch (condition.toLowerCase()) {
+          case 'clear':
+            return `<svg id="sun" width="80" height="80" viewBox="0 0 80 80" fill="none"><circle id="sun-core" cx="40" cy="40" r="20" fill="#FFD93B"/><g stroke="#FFD93B" stroke-width="4"><line x1="40" y1="8" x2="40" y2="0"/><line x1="40" y1="72" x2="40" y2="80"/><line x1="8" y1="40" x2="0" y2="40"/><line x1="72" y1="40" x2="80" y2="40"/><line x1="14" y1="14" x2="6" y2="6"/><line x1="66" y1="66" x2="74" y2="74"/><line x1="14" y1="66" x2="6" y2="74"/><line x1="66" y1="14" x2="74" y2="6"/></g></svg>`;
+          case 'cloudy':
+          case 'mainly clear':
+            return `<svg id="cloud" width="80" height="80" viewBox="0 0 80 80" fill="none"><ellipse id="cloud" cx="40" cy="50" rx="24" ry="16" fill="#B0C4DE"/><ellipse cx="55" cy="48" rx="12" ry="10" fill="#B0C4DE"/><ellipse cx="30" cy="48" rx="10" ry="8" fill="#B0C4DE"/></svg>`;
+          case 'rain':
+          case 'drizzle':
+            return `<svg id="rain" width="80" height="80" viewBox="0 0 80 80" fill="none"><ellipse id="cloud" cx="40" cy="50" rx="24" ry="16" fill="#B0C4DE"/><ellipse cx="55" cy="48" rx="12" ry="10" fill="#B0C4DE"/><ellipse cx="30" cy="48" rx="10" ry="8" fill="#B0C4DE"/><line id="raindrop" x1="40" y1="60" x2="40" y2="75" stroke="#1e90ff" stroke-width="4" stroke-linecap="round"/></svg>`;
+          case 'snow':
+            return `<svg id="snow" width="80" height="80" viewBox="0 0 80 80" fill="none"><ellipse id="cloud" cx="40" cy="50" rx="24" ry="16" fill="#E6E6FA"/><ellipse cx="55" cy="48" rx="12" ry="10" fill="#E6E6FA"/><ellipse cx="30" cy="48" rx="10" ry="8" fill="#E6E6FA"/><g stroke="#87ceeb" stroke-width="3"><line x1="40" y1="62" x2="40" y2="75"/><line x1="35" y1="68" x2="45" y2="68"/><line x1="37" y1="64" x2="43" y2="72"/><line x1="43" y1="64" x2="37" y2="72"/></g></svg>`;
+          case 'thunderstorm':
+            return `<svg id="storm" width="80" height="80" viewBox="0 0 80 80" fill="none"><ellipse id="cloud" cx="40" cy="50" rx="24" ry="16" fill="#778899"/><polygon points="38,60 44,60 40,70" fill="#FFD93B"/><polyline points="40,60 44,66 38,66" fill="none" stroke="#FFD93B" stroke-width="3"/></svg>`;
+          case 'fog':
+            return `<svg id="fog" width="80" height="80" viewBox="0 0 80 80" fill="none"><ellipse id="cloud" cx="40" cy="50" rx="24" ry="16" fill="#DCDCDC"/><rect x="20" y="68" width="40" height="4" rx="2" fill="#B0C4DE"/><rect x="28" y="74" width="24" height="3" rx="1.5" fill="#B0C4DE"/></svg>`;
+          default:
+            return `<svg width="80" height="80" viewBox="0 0 80 80" fill="none"><circle cx="40" cy="40" r="20" fill="#87ceeb"/></svg>`;
+        }
+      }
+      document.getElementById('weather-icon').innerHTML = getWeatherSVG("Mainly Clear");
+      // Timestamp and expiry
+      const timestamp = new Date('2025-06-01T12:15:58.120512');
+      const formattedDate = timestamp.toLocaleDateString(undefined, {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+      });
+      const expiryTime = new Date(timestamp.getTime() + (24 * 60 * 60 * 1000));
+      const timeUntilExpiry = Math.max(0, expiryTime - new Date()) / (60 * 60 * 1000);
+      const hoursLeft = Math.floor(timeUntilExpiry);
+      const minutesLeft = Math.floor((timeUntilExpiry - hoursLeft) * 60);
+      const expiryText = timeUntilExpiry <= 0 
+        ? 'This share has expired'
+        : `This share will expire in ${hoursLeft}h ${minutesLeft}m`;
+      document.getElementById('timestamp').textContent = formattedDate;
+      document.getElementById('expiry').textContent = expiryText;
+      // Location fallback logic
+      (function() {
+        var loc = "Somewhere on Earth";
+        if (!loc || loc.toLowerCase().includes('unknown')) {
+          loc = 'Somewhere on Earth';
+        }
+        document.getElementById('location-text').textContent = loc;
+      })();
+    </script>
+</body>
+</html>
