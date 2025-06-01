@@ -81,7 +81,7 @@ jobs:
 
                   .weather-card {
                       background: var(--card-background);
-                      backdrop-filter: blur(10px);
+                      backdrop-filter: blur(18px);
                       border-radius: var(--border-radius);
                       padding: calc(var(--spacing-unit) * 4);
                       box-shadow: var(--card-shadow);
@@ -89,6 +89,109 @@ jobs:
                   }
 
                   @keyframes card-appear {
+                      from {
+                          opacity: 0;
+                          transform: translateY(20px);
+                      }
+                      to {
+                          opacity: 1;
+                          transform: translateY(0);
+                      }
+                  }
+
+                  .weather-icon {
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      margin-bottom: calc(var(--spacing-unit) * 3);
+                  }
+
+                  .weather-icon svg {
+                      width: 80px;
+                      height: 80px;
+                      display: block;
+                  }
+
+                  .weather-icon.sun svg #sun-core {
+                      animation: sun-spin 6s linear infinite;
+                      transform-origin: 40px 40px;
+                  }
+
+                  @keyframes sun-spin {
+                      100% {
+                          transform: rotate(360deg);
+                      }
+                  }
+
+                  .weather-icon.cloud svg #cloud {
+                      animation: cloud-bob 2s ease-in-out infinite alternate;
+                  }
+
+                  @keyframes cloud-bob {
+                      0% {
+                          transform: translateY(0);
+                      }
+                      100% {
+                          transform: translateY(-6px);
+                      }
+                  }
+
+                  .weather-icon.rain svg #raindrop {
+                      animation: rain-fall 1.2s linear infinite;
+                  }
+
+                  @keyframes rain-fall {
+                      0% {
+                          opacity: 0;
+                          transform: translateY(-10px);
+                      }
+                      30% {
+                          opacity: 1;
+                      }
+                      100% {
+                          opacity: 0;
+                          transform: translateY(20px);
+                      }
+                  }
+
+                  .weather-icon.snow svg #snow {
+                      animation: snow-fall 1.2s linear infinite;
+                  }
+
+                  @keyframes snow-fall {
+                      0% {
+                          opacity: 0;
+                          transform: translateY(-10px);
+                      }
+                      30% {
+                          opacity: 1;
+                      }
+                      100% {
+                          opacity: 0;
+                          transform: translateY(20px);
+                      }
+                  }
+
+                  .weather-icon.thunderstorm svg #storm {
+                      animation: storm-appear 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+                  }
+
+                  @keyframes storm-appear {
+                      from {
+                          opacity: 0;
+                          transform: translateY(20px);
+                      }
+                      to {
+                          opacity: 1;
+                          transform: translateY(0);
+                      }
+                  }
+
+                  .weather-icon.fog svg #fog {
+                      animation: fog-appear 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+                  }
+
+                  @keyframes fog-appear {
                       from {
                           opacity: 0;
                           transform: translateY(20px);
@@ -125,7 +228,7 @@ jobs:
                   .message {
                       margin: calc(var(--spacing-unit) * 2) 0;
                       padding: calc(var(--spacing-unit) * 2);
-                      background: rgba(255, 255, 255, 0.1);
+                      background: rgba(255, 255, 255, 0.18);
                       border-radius: calc(var(--border-radius) / 2);
                       font-style: italic;
                       color: var(--text-secondary);
@@ -161,10 +264,31 @@ jobs:
                       background: rgba(255, 255, 255, 0.05);
                       border-radius: calc(var(--border-radius) / 2);
                       transition: transform 0.2s ease;
+                      opacity: 0;
+                      animation: detail-fade-in 0.5s forwards;
                   }
 
-                  .detail-item:hover {
-                      transform: translateY(-2px);
+                  .detail-item:nth-child(1) {
+                      animation-delay: 0.2s;
+                  }
+
+                  .detail-item:nth-child(2) {
+                      animation-delay: 0.35s;
+                  }
+
+                  .detail-item:nth-child(3) {
+                      animation-delay: 0.5s;
+                  }
+
+                  @keyframes detail-fade-in {
+                      from {
+                          opacity: 0;
+                          transform: translateY(10px);
+                      }
+                      to {
+                          opacity: 1;
+                          transform: translateY(0);
+                      }
                   }
 
                   .detail-value {
@@ -215,20 +339,40 @@ jobs:
                       }
                   }
               </style>
+              <script>
+                // Set gradient based on weather condition
+                document.addEventListener('DOMContentLoaded', function() {
+                  const condition = "${{ github.event.client_payload.weather.condition }}".toLowerCase();
+                  const gradients = {
+                    clear: ['#87ceeb', '#ffa07a'],
+                    'mainly clear': ['#b0c4de', '#e6e6fa'],
+                    cloudy: ['#708090', '#778899'],
+                    rain: ['#4682b4', '#000080'],
+                    drizzle: ['#4682b4', '#000080'],
+                    snow: ['#f0f8ff', '#e6e6fa'],
+                    thunderstorm: ['#483d8b', '#191970'],
+                    fog: ['#dcdcdc', '#c0c0c0'],
+                    default: ['#1e90ff', '#00008b']
+                  };
+                  const grad = gradients[condition] || gradients.default;
+                  document.documentElement.style.setProperty('--background-start', grad[0]);
+                  document.documentElement.style.setProperty('--background-end', grad[1]);
+                });
+              </script>
           </head>
           <body>
               <div class="container">
                   <div class="weather-card">
+                      <div class="weather-icon" id="weather-icon"></div>
                       <div class="location">
                           <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                               <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                           </svg>
                           ${{ github.event.client_payload.location }}
                       </div>
-
                       <h1 class="temperature">${{ github.event.client_payload.weather.temp }}°</h1>
                       <div class="condition">${{ github.event.client_payload.weather.condition }}</div>
-
+                      <div class="message">${{ github.event.client_payload.weather.summary }}</div>
                       <div class="details">
                           <div class="detail-item">
                               <span class="detail-value">${{ github.event.client_payload.weather.humidity }}%</span>
@@ -243,34 +387,6 @@ jobs:
                               <span class="detail-label">Feels like</span>
                           </div>
                       </div>
-
-                      <script>
-                          // Format the timestamp nicely
-                          const timestamp = new Date('${{ github.event.client_payload.timestamp }}');
-                          const formattedDate = timestamp.toLocaleDateString(undefined, {
-                              weekday: 'long',
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                          });
-                          
-                          // Calculate expiry time
-                          const expiryTime = new Date(timestamp.getTime() + (24 * 60 * 60 * 1000));
-                          const timeUntilExpiry = Math.max(0, expiryTime - new Date()) / (60 * 60 * 1000);
-                          const hoursLeft = Math.floor(timeUntilExpiry);
-                          const minutesLeft = Math.floor((timeUntilExpiry - hoursLeft) * 60);
-                          
-                          const expiryText = timeUntilExpiry <= 0 
-                              ? 'This share has expired'
-                              : `This share will expire in ${hoursLeft}h ${minutesLeft}m`;
-
-                          // Update the timestamp and expiry text
-                          document.getElementById('timestamp').textContent = formattedDate;
-                          document.getElementById('expiry').textContent = expiryText;
-                      </script>
-
                       <div class="timestamp" id="timestamp"></div>
                       <div class="footer">
                           <p id="expiry"></p>
@@ -278,6 +394,44 @@ jobs:
                       </div>
                   </div>
               </div>
+              <script>
+                // Animated SVG weather icon
+                function getWeatherSVG(condition) {
+                  switch (condition.toLowerCase()) {
+                    case 'clear':
+                      return `<svg id="sun" width="80" height="80" viewBox="0 0 80 80" fill="none"><circle id="sun-core" cx="40" cy="40" r="20" fill="#FFD93B"/><g stroke="#FFD93B" stroke-width="4"><line x1="40" y1="8" x2="40" y2="0"/><line x1="40" y1="72" x2="40" y2="80"/><line x1="8" y1="40" x2="0" y2="40"/><line x1="72" y1="40" x2="80" y2="40"/><line x1="14" y1="14" x2="6" y2="6"/><line x1="66" y1="66" x2="74" y2="74"/><line x1="14" y1="66" x2="6" y2="74"/><line x1="66" y1="14" x2="74" y2="6"/></g></svg>`;
+                    case 'cloudy':
+                    case 'mainly clear':
+                      return `<svg id="cloud" width="80" height="80" viewBox="0 0 80 80" fill="none"><ellipse id="cloud" cx="40" cy="50" rx="24" ry="16" fill="#B0C4DE"/><ellipse cx="55" cy="48" rx="12" ry="10" fill="#B0C4DE"/><ellipse cx="30" cy="48" rx="10" ry="8" fill="#B0C4DE"/></svg>`;
+                    case 'rain':
+                    case 'drizzle':
+                      return `<svg id="rain" width="80" height="80" viewBox="0 0 80 80" fill="none"><ellipse id="cloud" cx="40" cy="50" rx="24" ry="16" fill="#B0C4DE"/><ellipse cx="55" cy="48" rx="12" ry="10" fill="#B0C4DE"/><ellipse cx="30" cy="48" rx="10" ry="8" fill="#B0C4DE"/><line id="raindrop" x1="40" y1="60" x2="40" y2="75" stroke="#1e90ff" stroke-width="4" stroke-linecap="round"/></svg>`;
+                    case 'snow':
+                      return `<svg id="snow" width="80" height="80" viewBox="0 0 80 80" fill="none"><ellipse id="cloud" cx="40" cy="50" rx="24" ry="16" fill="#E6E6FA"/><ellipse cx="55" cy="48" rx="12" ry="10" fill="#E6E6FA"/><ellipse cx="30" cy="48" rx="10" ry="8" fill="#E6E6FA"/><g stroke="#87ceeb" stroke-width="3"><line x1="40" y1="62" x2="40" y2="75"/><line x1="35" y1="68" x2="45" y2="68"/><line x1="37" y1="64" x2="43" y2="72"/><line x1="43" y1="64" x2="37" y2="72"/></g></svg>`;
+                    case 'thunderstorm':
+                      return `<svg id="storm" width="80" height="80" viewBox="0 0 80 80" fill="none"><ellipse id="cloud" cx="40" cy="50" rx="24" ry="16" fill="#778899"/><polygon points="38,60 44,60 40,70" fill="#FFD93B"/><polyline points="40,60 44,66 38,66" fill="none" stroke="#FFD93B" stroke-width="3"/></svg>`;
+                    case 'fog':
+                      return `<svg id="fog" width="80" height="80" viewBox="0 0 80 80" fill="none"><ellipse id="cloud" cx="40" cy="50" rx="24" ry="16" fill="#DCDCDC"/><rect x="20" y="68" width="40" height="4" rx="2" fill="#B0C4DE"/><rect x="28" y="74" width="24" height="3" rx="1.5" fill="#B0C4DE"/></svg>`;
+                    default:
+                      return `<svg width="80" height="80" viewBox="0 0 80 80" fill="none"><circle cx="40" cy="40" r="20" fill="#87ceeb"/></svg>`;
+                  }
+                }
+                document.getElementById('weather-icon').innerHTML = getWeatherSVG("${{ github.event.client_payload.weather.condition }}");
+                // Timestamp and expiry
+                const timestamp = new Date('${{ github.event.client_payload.timestamp }}');
+                const formattedDate = timestamp.toLocaleDateString(undefined, {
+                  weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                });
+                const expiryTime = new Date(timestamp.getTime() + (24 * 60 * 60 * 1000));
+                const timeUntilExpiry = Math.max(0, expiryTime - new Date()) / (60 * 60 * 1000);
+                const hoursLeft = Math.floor(timeUntilExpiry);
+                const minutesLeft = Math.floor((timeUntilExpiry - hoursLeft) * 60);
+                const expiryText = timeUntilExpiry <= 0 
+                  ? 'This share has expired'
+                  : `This share will expire in ${hoursLeft}h ${minutesLeft}m`;
+                document.getElementById('timestamp').textContent = formattedDate;
+                document.getElementById('expiry').textContent = expiryText;
+              </script>
           </body>
           </html>
           EOL
