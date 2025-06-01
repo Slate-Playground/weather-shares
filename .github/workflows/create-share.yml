@@ -338,6 +338,44 @@ jobs:
                           grid-template-columns: repeat(2, 1fr);
                       }
                   }
+
+                  .qr-section {
+                      display: flex;
+                      flex-direction: column;
+                      align-items: center;
+                      margin-top: 32px;
+                  }
+                  .qr-glass {
+                      background: rgba(255,255,255,0.18);
+                      backdrop-filter: blur(12px);
+                      border-radius: 24px;
+                      box-shadow: 0 8px 32px rgba(30,144,255,0.12);
+                      padding: 24px 24px 16px 24px;
+                      display: flex;
+                      flex-direction: column;
+                      align-items: center;
+                      min-width: 220px;
+                  }
+                  .qr-loader {
+                      width: 120px;
+                      height: 120px;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      margin-bottom: 12px;
+                  }
+                  .qr-loader svg {
+                      width: 100px;
+                      height: 100px;
+                      display: block;
+                  }
+                  .qr-appear {
+                      animation: qr-appear 0.7s cubic-bezier(0.4,0,0.2,1);
+                  }
+                  @keyframes qr-appear {
+                      from { opacity: 0; transform: scale(0.7); }
+                      to { opacity: 1; transform: scale(1); }
+                  }
               </style>
               <script>
                 // Set gradient based on weather condition
@@ -358,6 +396,17 @@ jobs:
                   document.documentElement.style.setProperty('--background-start', grad[0]);
                   document.documentElement.style.setProperty('--background-end', grad[1]);
                 });
+
+                // QR loader logic
+                function showQR() {
+                  document.getElementById('qr-loader').style.display = 'none';
+                  const qr = document.getElementById('qr-img');
+                  qr.style.display = 'block';
+                  qr.classList.add('qr-appear');
+                }
+                document.addEventListener('DOMContentLoaded', function() {
+                  setTimeout(showQR, 1800); // Simulate QR generation delay
+                });
               </script>
           </head>
           <body>
@@ -368,7 +417,7 @@ jobs:
                           <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                               <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                           </svg>
-                          ${{ github.event.client_payload.location }}
+                          <span id="location-text"></span>
                       </div>
                       <h1 class="temperature">${{ github.event.client_payload.weather.temp }}°</h1>
                       <div class="condition">${{ github.event.client_payload.weather.condition }}</div>
@@ -385,6 +434,19 @@ jobs:
                           <div class="detail-item">
                               <span class="detail-value">${{ github.event.client_payload.weather.feels_like }}°</span>
                               <span class="detail-label">Feels like</span>
+                          </div>
+                      </div>
+                      <div class="qr-section">
+                          <div class="qr-glass">
+                              <div class="qr-loader" id="qr-loader">
+                                  <svg viewBox="0 0 100 100">
+                                      <circle cx="50" cy="50" r="44" stroke="#1e90ff" stroke-width="8" fill="none" opacity="0.18"/>
+                                      <circle cx="50" cy="50" r="44" stroke="#1e90ff" stroke-width="8" fill="none" stroke-dasharray="276" stroke-dashoffset="0" style="stroke-linecap:round; animation: qr-spin 1.8s linear infinite;"/>
+                                      <text x="50" y="56" text-anchor="middle" font-size="22" fill="#1e90ff" opacity="0.7">...</text>
+                                  </svg>
+                              </div>
+                              <img id="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://${{ github.repository_owner }}.github.io/weather-shares/shares/${{ github.event.client_payload.shareId }}" alt="QR Code" style="display:none; border-radius:16px; box-shadow:0 4px 24px rgba(30,144,255,0.12); background:white; padding:8px;" width="200" height="200"/>
+                              <div style="margin-top:12px; color:#1e90ff; font-weight:600; font-size:1rem;">Scan to view weather share</div>
                           </div>
                       </div>
                       <div class="timestamp" id="timestamp"></div>
@@ -431,6 +493,14 @@ jobs:
                   : `This share will expire in ${hoursLeft}h ${minutesLeft}m`;
                 document.getElementById('timestamp').textContent = formattedDate;
                 document.getElementById('expiry').textContent = expiryText;
+                // Location fallback logic
+                (function() {
+                  var loc = "${{ github.event.client_payload.location }}";
+                  if (!loc || loc.toLowerCase().includes('unknown')) {
+                    loc = 'Somewhere on Earth';
+                  }
+                  document.getElementById('location-text').textContent = loc;
+                })();
               </script>
           </body>
           </html>
