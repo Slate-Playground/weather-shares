@@ -16,6 +16,7 @@ jobs:
         run: |
           mkdir -p public/shares/${{ github.event.client_payload.shareId }}
           touch public/.nojekyll  # Create .nojekyll file
+          echo '{"status":"started"}' > public/shares/${{ github.event.client_payload.shareId }}/status.json
           
       - name: Generate share HTML
         run: |
@@ -492,6 +493,7 @@ jobs:
           </body>
           </html>
           EOL
+          echo '{"status":"building"}' > public/shares/${{ github.event.client_payload.shareId }}/status.json
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
@@ -499,6 +501,14 @@ jobs:
           github_token: ${{ secrets.WEATHER_APP_TOKEN }}
           publish_dir: ./public
           keep_files: true
+      - name: "Write status: ready"
+        run: |
+          echo '{"status":"ready"}' > public/shares/${{ github.event.client_payload.shareId }}/status.json
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git add public/shares/${{ github.event.client_payload.shareId }}/status.json
+          git commit -m "Share ready: status.json for ${{ github.event.client_payload.shareId }}" || echo "No changes to commit"
+          git push
 
       - name: Schedule cleanup
         run: |
