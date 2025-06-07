@@ -20,16 +20,24 @@ jobs:
           current_time=$(date +%s)
           for share_dir in shares/*/; do
             if [ -d "$share_dir" ]; then
+              # Try to extract "Shared on ..." timestamp
               creation_time=$(grep -o 'Shared on [0-9:-]*' "$share_dir/index.html" | cut -d' ' -f3)
               if [ -n "$creation_time" ]; then
-                creation_timestamp=$(date -d "$creation_time" +%s)
-                age_hours=$(( (current_time - creation_timestamp) / 3600 ))
-                if [ $age_hours -gt 24 ]; then
-                  rm -rf "$share_dir"
-                  echo "Removed old share: $share_dir"
-                fi
+                creation_timestamp=$(date -d "$creation_time" +%s 2>/dev/null || echo "")
               else
-                echo "No creation time found in $share_dir/index.html, skipping."
+                creation_timestamp=""
+              fi
+
+              # Fallback: use directory modification time if no valid timestamp
+              if [ -z "$creation_timestamp" ]; then
+                creation_timestamp=$(stat -c %Y "$share_dir")
+                echo "No valid creation time in $share_dir/index.html, using directory mtime."
+              fi
+
+              age_hours=$(( (current_time - creation_timestamp) / 3600 ))
+              if [ $age_hours -gt 24 ]; then
+                rm -rf "$share_dir"
+                echo "Removed old share: $share_dir"
               fi
             fi
           done
