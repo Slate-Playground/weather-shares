@@ -27,12 +27,12 @@ jobs:
           mkdir -p public/shares/${{ github.event.client_payload.shareId }}
           touch public/.nojekyll
 
-          echo '{"status":"started"}' > public/shares/${{ github.event.client_payload.shareId }}/status.json
+          echo '{"status":"started","progress":0.05,"message":"Preparing share..."}' > public/shares/${{ github.event.client_payload.shareId }}/status.json
           git add public/shares/${{ github.event.client_payload.shareId }}/status.json
           git commit -m "status: started" || echo "No changes"
           git push
 
-          echo '{"status":"building"}' > public/shares/${{ github.event.client_payload.shareId }}/status.json
+          echo '{"status":"building","progress":0.3,"message":"Building the share page..."}' > public/shares/${{ github.event.client_payload.shareId }}/status.json
           git add public/shares/${{ github.event.client_payload.shareId }}/status.json
           git commit -m "status: building" || echo "No changes"
           git push
@@ -331,12 +331,12 @@ jobs:
           </html>
           EOL
 
-          echo '{"status":"generating"}' > public/shares/${{ github.event.client_payload.shareId }}/status.json
+          echo '{"status":"generating","progress":0.6,"message":"Generating HTML and assets..."}' > public/shares/${{ github.event.client_payload.shareId }}/status.json
           git add public/shares/${{ github.event.client_payload.shareId }}/status.json
           git commit -m "status: generating" || echo "No changes"
           git push
 
-          echo '{"status":"deploying"}' > public/shares/${{ github.event.client_payload.shareId }}/status.json
+          echo '{"status":"deploying","progress":0.85,"message":"Deploying to GitHub Pages..."}' > public/shares/${{ github.event.client_payload.shareId }}/status.json
           git add public/shares/${{ github.event.client_payload.shareId }}/status.json
           git commit -m "status: deploying" || echo "No changes"
           git push
@@ -352,7 +352,7 @@ jobs:
         run: |
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
-          echo '{"status":"ready"}' > public/shares/${{ github.event.client_payload.shareId }}/status.json
+          echo '{"status":"ready","progress":1.0,"message":"Share is ready!"}' > public/shares/${{ github.event.client_payload.shareId }}/status.json
           git add public/shares/${{ github.event.client_payload.shareId }}/status.json
           git commit -m "status: ready" || echo "No changes"
           git push
