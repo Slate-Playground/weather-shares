@@ -11,7 +11,14 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-
+      - name: Prepare forecast base64
+        id: encode-forecast
+        env:
+          HOURLY_JSON: ${{ toJson(github.event.client_payload.weather.hourly) }}
+          DAILY_JSON: ${{ toJson(github.event.client_payload.weather.daily) }}
+        run: |
+          echo "hourly_b64=$(printf '%s' "$HOURLY_JSON" | base64 -w 0)" >> $GITHUB_ENV
+          echo "daily_b64=$(printf '%s' "$DAILY_JSON" | base64 -w 0)" >> $GITHUB_ENV
       - name: Full share build and status
         run: |
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
@@ -275,9 +282,50 @@ jobs:
               var loc = "${{ github.event.client_payload.location }}";
               var includeLoc = "${{ github.event.client_payload.includeLocation }}";
               if (!includeLoc || includeLoc === 'false' || !loc || loc.trim() === '' || loc.toLowerCase().includes('unknown')) {
-                loc = 'Location unavailable';
+                loc = '';
               }
               document.getElementById('location-text').textContent = loc;
+
+              // --- Hourly Forecast Section ---
+              var includeHourly = "${{ github.event.client_payload.includeHourlyForecast }}";
+              var hourly = [];
+              var hourlyB64 = "${{ env.hourly_b64 }}";
+              if (hourlyB64) {
+                try { hourly = JSON.parse(atob(hourlyB64)); } catch (e) { hourly = []; }
+              }
+              if (includeHourly === 'true' && Array.isArray(hourly) && hourly.length > 0) {
+                var hourlyHtml = '<div class="hourly-section" style="margin-top:22px"><h3 style="margin-bottom:8px;font-size:1.1em">Hourly Forecast</h3><div style="display:flex;gap:12px;overflow-x:auto;">';
+                for (var i = 0; i < Math.min(hourly.length, 7); i++) {
+                  var h = hourly[i];
+                  hourlyHtml += `<div style='background:rgba(255,255,255,0.18);border-radius:12px;padding:10px 12px;min-width:60px;text-align:center;'>` +
+                    `<div style='font-weight:600;'>${h.hour || ''}</div>` +
+                    `<div style='font-size:1.1em;'>${h.temp !== undefined ? h.temp + '°' : ''}</div>` +
+                    `</div>`;
+                }
+                hourlyHtml += '</div></div>';
+                document.querySelector('.glass-card').insertAdjacentHTML('beforeend', hourlyHtml);
+              }
+
+              // --- Daily Forecast Section ---
+              var includeDaily = "${{ github.event.client_payload.includeDailyForecast }}";
+              var daily = [];
+              var dailyB64 = "${{ env.daily_b64 }}";
+              if (dailyB64) {
+                try { daily = JSON.parse(atob(dailyB64)); } catch (e) { daily = []; }
+              }
+              if (includeDaily === 'true' && Array.isArray(daily) && daily.length > 0) {
+                var dailyHtml = '<div class="daily-section" style="margin-top:22px"><h3 style="margin-bottom:8px;font-size:1.1em">5-Day Forecast</h3><div style="display:flex;gap:12px;overflow-x:auto;">';
+                for (var i = 0; i < Math.min(daily.length, 5); i++) {
+                  var d = daily[i];
+                  dailyHtml += `<div style='background:rgba(255,255,255,0.18);border-radius:12px;padding:10px 12px;min-width:70px;text-align:center;'>` +
+                    `<div style='font-weight:600;'>${d.day || ''}</div>` +
+                    `<div style='font-size:1.1em;'>${d.max !== undefined ? '↑' + d.max + '°' : ''}</div>` +
+                    `<div style='font-size:1.1em;'>${d.min !== undefined ? '↓' + d.min + '°' : ''}</div>` +
+                    `</div>`;
+                }
+                dailyHtml += '</div></div>';
+                document.querySelector('.glass-card').insertAdjacentHTML('beforeend', dailyHtml);
+              }
             </script>
           </body>
           </html>
