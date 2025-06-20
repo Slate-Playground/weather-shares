@@ -11,22 +11,23 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Create share directory
+
+      - name: Full share build and status
         run: |
           mkdir -p public/shares/${{ github.event.client_payload.shareId }}
           touch public/.nojekyll  # Create .nojekyll file
           echo '{"status":"started"}' > public/shares/${{ github.event.client_payload.shareId }}/status.json
-          
-      - name: Generate share HTML
-        run: |
+
+          echo '{"status":"building"}' > public/shares/${{ github.event.client_payload.shareId }}/status.json
+
           cat > public/shares/${{ github.event.client_payload.shareId }}/index.html << 'EOL'
           <!DOCTYPE html>
           <html lang="en">
           <head>
               <meta charset="UTF-8">
               <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>Weather Share - ${{ github.event.client_payload.location }}</title>
+              <title>Weather Share - ${{ github.event.client_payload.location }}
+              </title>
               <meta property="og:title" content="Weather in ${{ github.event.client_payload.location }}">
               <meta property="og:description" content="Check out the current weather conditions!">
               <meta property="og:type" content="website">
@@ -418,7 +419,7 @@ jobs:
                           <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                               <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                           </svg>
-                          <span id="location-text"></span>
+                          <div id="location-text"></div>
                       </div>
                       <h1 class="temperature">${{ github.event.client_payload.weather.temp }}°</h1>
                       <div class="condition">${{ github.event.client_payload.weather.condition }}</div>
@@ -484,8 +485,9 @@ jobs:
                 // Location fallback logic
                 (function() {
                   var loc = "${{ github.event.client_payload.location }}";
-                  if (!loc || loc.toLowerCase().includes('unknown')) {
-                    loc = 'Somewhere on Earth';
+                  var includeLoc = ${{ github.event.client_payload.includeLocation || 'false' }};
+                  if (!includeLoc || !loc || loc.trim() === '' || loc.toLowerCase().includes('unknown')) {
+                    loc = 'Location not shared';
                   }
                   document.getElementById('location-text').textContent = loc;
                 })();
@@ -493,7 +495,21 @@ jobs:
           </body>
           </html>
           EOL
-          echo '{"status":"building"}' > public/shares/${{ github.event.client_payload.shareId }}/status.json
+
+          echo '{"status":"generating"}' > public/shares/${{ github.event.client_payload.shareId }}/status.json
+
+          # Deploy to GitHub Pages
+          echo '{"status":"deploying"}' > public/shares/${{ github.event.client_payload.shareId }}/status.json
+
+          # Actually deploy using gh-pages action
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git add public/shares/${{ github.event.client_payload.shareId }}/index.html
+          git add public/shares/${{ github.event.client_payload.shareId }}/status.json
+          git commit -m "Share ready: status.json for ${{ github.event.client_payload.shareId }}" || echo "No changes to commit"
+          git push
+
+          echo '{"status":"ready"}' > public/shares/${{ github.event.client_payload.shareId }}/status.json
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
@@ -501,14 +517,6 @@ jobs:
           github_token: ${{ secrets.WEATHER_APP_TOKEN }}
           publish_dir: ./public
           keep_files: true
-      - name: "Write status: ready"
-        run: |
-          echo '{"status":"ready"}' > public/shares/${{ github.event.client_payload.shareId }}/status.json
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
-          git add public/shares/${{ github.event.client_payload.shareId }}/status.json
-          git commit -m "Share ready: status.json for ${{ github.event.client_payload.shareId }}" || echo "No changes to commit"
-          git push
 
       - name: Schedule cleanup
         run: |
