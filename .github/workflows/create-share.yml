@@ -21,22 +21,38 @@ jobs:
           echo "daily_b64=$(printf '%s' "$DAILY_JSON" | base64 -w 0)" >> $GITHUB_ENV
       - name: Full share build and status
         run: |
+          set -e
+          handle_error() {
+            MSG=$1
+            echo "{\"status\":\"error\",\"progress\":0.0,\"message\":\"$MSG\"}" > public/shares/${{ github.event.client_payload.shareId }}/status.json || true
+            git add public/shares/${{ github.event.client_payload.shareId }}/status.json || true
+            git commit -m "status: error" || true
+            git push || true
+            exit 1
+          }
+          trap 'handle_error "Workflow failed at line $LINENO"' ERR
+
+          echo "[DEBUG] Configuring git..."
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
+          echo "[DEBUG] Creating share directory..."
           mkdir -p public/shares/${{ github.event.client_payload.shareId }}
           touch public/.nojekyll
 
+          echo "[DEBUG] Writing started status..."
           echo '{"status":"started","progress":0.05,"message":"Preparing share..."}' > public/shares/${{ github.event.client_payload.shareId }}/status.json
           git add public/shares/${{ github.event.client_payload.shareId }}/status.json
           git commit -m "status: started" || echo "No changes"
           git push
 
+          echo "[DEBUG] Writing building status..."
           echo '{"status":"building","progress":0.3,"message":"Building the share page..."}' > public/shares/${{ github.event.client_payload.shareId }}/status.json
           git add public/shares/${{ github.event.client_payload.shareId }}/status.json
           git commit -m "status: building" || echo "No changes"
           git push
 
+          echo "[DEBUG] Generating index.html..."
           cat > public/shares/${{ github.event.client_payload.shareId }}/index.html << 'EOL'
           <!DOCTYPE html>
           <html lang="en">
@@ -331,11 +347,13 @@ jobs:
           </html>
           EOL
 
+          echo "[DEBUG] Writing generating status..."
           echo '{"status":"generating","progress":0.6,"message":"Generating HTML and assets..."}' > public/shares/${{ github.event.client_payload.shareId }}/status.json
           git add public/shares/${{ github.event.client_payload.shareId }}/status.json
           git commit -m "status: generating" || echo "No changes"
           git push
 
+          echo "[DEBUG] Writing deploying status..."
           echo '{"status":"deploying","progress":0.85,"message":"Deploying to GitHub Pages..."}' > public/shares/${{ github.event.client_payload.shareId }}/status.json
           git add public/shares/${{ github.event.client_payload.shareId }}/status.json
           git commit -m "status: deploying" || echo "No changes"
