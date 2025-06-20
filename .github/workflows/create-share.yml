@@ -14,11 +14,21 @@ jobs:
 
       - name: Full share build and status
         run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
           mkdir -p public/shares/${{ github.event.client_payload.shareId }}
-          touch public/.nojekyll  # Create .nojekyll file
+          touch public/.nojekyll
+
           echo '{"status":"started"}' > public/shares/${{ github.event.client_payload.shareId }}/status.json
+          git add public/shares/${{ github.event.client_payload.shareId }}/status.json
+          git commit -m "status: started" || echo "No changes"
+          git push
 
           echo '{"status":"building"}' > public/shares/${{ github.event.client_payload.shareId }}/status.json
+          git add public/shares/${{ github.event.client_payload.shareId }}/status.json
+          git commit -m "status: building" || echo "No changes"
+          git push
 
           cat > public/shares/${{ github.event.client_payload.shareId }}/index.html << 'EOL'
           <!DOCTYPE html>
@@ -497,19 +507,14 @@ jobs:
           EOL
 
           echo '{"status":"generating"}' > public/shares/${{ github.event.client_payload.shareId }}/status.json
-
-          # Deploy to GitHub Pages
-          echo '{"status":"deploying"}' > public/shares/${{ github.event.client_payload.shareId }}/status.json
-
-          # Actually deploy using gh-pages action
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
-          git add public/shares/${{ github.event.client_payload.shareId }}/index.html
           git add public/shares/${{ github.event.client_payload.shareId }}/status.json
-          git commit -m "Share ready: status.json for ${{ github.event.client_payload.shareId }}" || echo "No changes to commit"
+          git commit -m "status: generating" || echo "No changes"
           git push
 
-          echo '{"status":"ready"}' > public/shares/${{ github.event.client_payload.shareId }}/status.json
+          echo '{"status":"deploying"}' > public/shares/${{ github.event.client_payload.shareId }}/status.json
+          git add public/shares/${{ github.event.client_payload.shareId }}/status.json
+          git commit -m "status: deploying" || echo "No changes"
+          git push
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
@@ -517,6 +522,15 @@ jobs:
           github_token: ${{ secrets.WEATHER_APP_TOKEN }}
           publish_dir: ./public
           keep_files: true
+
+      - name: Finalize status
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          echo '{"status":"ready"}' > public/shares/${{ github.event.client_payload.shareId }}/status.json
+          git add public/shares/${{ github.event.client_payload.shareId }}/status.json
+          git commit -m "status: ready" || echo "No changes"
+          git push
 
       - name: Schedule cleanup
         run: |
