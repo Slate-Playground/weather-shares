@@ -46,11 +46,17 @@ jobs:
           git commit -m "status: started" || echo "No changes"
           git push
 
+          echo '[DEBUG] status.json after started:'
+          cat public/shares/${{ github.event.client_payload.shareId }}/status.json
+
           echo "[DEBUG] Writing building status..."
           echo '{"status":"building","progress":0.3,"message":"Building the share page..."}' > public/shares/${{ github.event.client_payload.shareId }}/status.json
           git add public/shares/${{ github.event.client_payload.shareId }}/status.json
           git commit -m "status: building" || echo "No changes"
           git push
+
+          echo '[DEBUG] status.json after building:'
+          cat public/shares/${{ github.event.client_payload.shareId }}/status.json
 
           echo "[DEBUG] Generating index.html..."
           cat > public/shares/${{ github.event.client_payload.shareId }}/index.html << 'EOL'
@@ -353,11 +359,17 @@ jobs:
           git commit -m "status: generating" || echo "No changes"
           git push
 
+          echo '[DEBUG] status.json after generating:'
+          cat public/shares/${{ github.event.client_payload.shareId }}/status.json
+
           echo "[DEBUG] Writing deploying status..."
           echo '{"status":"deploying","progress":0.85,"message":"Deploying to GitHub Pages..."}' > public/shares/${{ github.event.client_payload.shareId }}/status.json
           git add public/shares/${{ github.event.client_payload.shareId }}/status.json
           git commit -m "status: deploying" || echo "No changes"
           git push
+
+          echo '[DEBUG] status.json after deploying:'
+          cat public/shares/${{ github.event.client_payload.shareId }}/status.json
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
